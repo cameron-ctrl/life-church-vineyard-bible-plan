@@ -39,6 +39,7 @@
       text-decoration: none;
       display: block;
       color: black;
+      border: 1px solid #eee;
     }
 
     .card:hover {
@@ -105,7 +106,12 @@ const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQL0KOv9kUHuO
 const startDate = new Date("2025-09-18");
 const today = new Date();
 
-document.getElementById("date").innerText = today.toDateString();
+document.getElementById("date").innerText =
+  today.toLocaleDateString(undefined, {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric'
+  });
 
 const diffTime = today - startDate;
 const dayIndex = Math.floor(diffTime / (1000 * 60 * 60 * 24));
