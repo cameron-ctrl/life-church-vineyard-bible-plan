@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Bible Reading Plan</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f5f5f7;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 500px;
+    }
+
+    .date {
+      font-size: 18px;
+      color: #666;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      font-size: 36px;
+      margin-bottom: 25px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 20px;
+      padding: 20px;
+      margin-bottom: 15px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+      transition: transform 0.1s ease, box-shadow 0.1s ease;
+      text-decoration: none;
+      display: block;
+      color: black;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+    }
+
+    .label {
+      font-size: 12px;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 5px;
+    }
+
+    .passage {
+      font-size: 22px;
+      font-weight: 600;
+    }
+
+    .section {
+      margin-top: 40px;
+    }
+
+    .small-row {
+      padding: 12px 0;
+      border-bottom: 1px solid #eee;
+      font-size: 14px;
+      color: #444;
+    }
+
+    .small-row:last-child {
+      border-bottom: none;
+    }
+
+    .small-date {
+      color: #999;
+      font-size: 12px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="date" id="date"></div>
+
+  <h1>Today's Reading</h1>
+
+  <div id="ot"></div>
+  <div id="nt"></div>
+
+  <div class="section">
+    <h2 style="font-size:18px; margin-bottom:10px;">Catch Up</h2>
+    <div id="history"></div>
+  </div>
+
+</div>
+
+<script>
+const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQL0KOv9kUHuO7eOQIxEowpKSlrpoA4EYcuAv1fQqGvVRxuYb6MZlujqXNL3X44HA/pub?output=csv";
+
+const startDate = new Date("2025-09-18");
+const today = new Date();
+
+document.getElementById("date").innerText = today.toDateString();
+
+const diffTime = today - startDate;
+const dayIndex = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+function normalize(passage) {
+  return passage
+    .replace("Is.", "Isaiah")
+    .replace("Jn.", "John")
+    .replace("Ps.", "Psalm")
+    .replace("2 Cor.", "2 Corinthians")
+    .replace("1 Cor.", "1 Corinthians")
+    .replace("Gal.", "Galatians")
+    .replace("Eph.", "Ephesians")
+    .replace("Phil.", "Philippians")
+    .replace("Col.", "Colossians")
+    .replace("Rom.", "Romans");
+}
+
+function makeLink(passage) {
+  passage = normalize(passage);
+  const parts = passage.split(" ");
+  const chapter = parts.pop();
+  const book = parts.join(" ");
+
+  const map = {
+    "Isaiah":"ISA","John":"JHN","Psalm":"PSA",
+    "2 Corinthians":"2CO","1 Corinthians":"1CO",
+    "Galatians":"GAL","Ephesians":"EPH",
+    "Philippians":"PHP","Colossians":"COL","Romans":"ROM"
+  };
+
+  return `https://www.bible.com/bible/111/${map[book]}.${chapter}`;
+}
+
+fetch(SHEET_URL)
+  .then(res => res.text())
+  .then(data => {
+    const rows = data.split("\n");
+
+    // TODAY
+    const todayRow = rows[dayIndex + 2].split(",");
+    const nt = normalize(todayRow[1]);
+    const ot = normalize(todayRow[2]);
+
+    document.getElementById("ot").innerHTML =
+      `<a href="${makeLink(todayRow[2])}" target="_blank" class="card">
+        <div class="label">Old Testament</div>
+        <div class="passage">${ot}</div>
+      </a>`;
+
+    document.getElementById("nt").innerHTML =
+      `<a href="${makeLink(todayRow[1])}" target="_blank" class="card">
+        <div class="label">New Testament</div>
+        <div class="passage">${nt}</div>
+      </a>`;
+
+    // PREVIOUS 7 DAYS
+    let historyHTML = "";
+    for (let i = 1; i <= 7; i++) {
+      const row = rows[dayIndex + 2 - i].split(",");
+      const date = new Date(today);
+      date.setDate(today.getDate() - i);
+
+      historyHTML += `
+        <div class="small-row">
+          <div class="small-date">${date.toDateString()}</div>
+          ${normalize(row[2])} | ${normalize(row[1])}
+        </div>
+      `;
+    }
+
+    document.getElementById("history").innerHTML = historyHTML;
+  });
+</script>
+
+</body>
+</html>
