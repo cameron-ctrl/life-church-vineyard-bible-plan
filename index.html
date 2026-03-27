@@ -36,7 +36,6 @@
       margin-bottom: 15px;
       box-shadow: 0 10px 25px rgba(0,0,0,0.05);
       transition: transform 0.1s ease, box-shadow 0.1s ease, opacity 0.1s ease;
-      text-decoration: none;
       display: block;
       color: black;
       border: 1px solid #eee;
@@ -48,8 +47,8 @@
     }
 
     .card:active {
-  transform: scale(0.98);
-  opacity: 0.85;
+      transform: scale(0.98);
+      opacity: 0.85;
     }
 
     .label {
@@ -76,13 +75,28 @@
       color: #444;
     }
 
-    .small-row:last-child {
-      border-bottom: none;
-    }
-
     .small-date {
       color: #999;
       font-size: 12px;
+    }
+
+    .youversion-btn {
+      display: block;
+      text-align: center;
+      padding: 10px 14px;
+      margin-top: -5px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      color: #666;
+      background: #f2f2f5;
+      border-radius: 999px;
+      text-decoration: none;
+      border: 1px solid #e0e0e5;
+    }
+
+    .youversion-btn:hover {
+      background: #e9e9ee;
+      color: #333;
     }
   </style>
 </head>
@@ -96,10 +110,13 @@
   <h1>Today's Reading</h1>
 
   <div id="ot"></div>
+  <div id="ot-content" style="display:none; padding:18px; background:#fff; border-radius:12px; margin-bottom:20px;"></div>
+
   <div id="nt"></div>
+  <div id="nt-content" style="display:none; padding:18px; background:#fff; border-radius:12px;"></div>
 
   <div class="section">
-    <h2 style="font-size:18px; margin-bottom:10px;">Previous Days</h2>
+    <h2 style="font-size:18px;">Previous Days</h2>
     <div id="history"></div>
   </div>
 
@@ -110,6 +127,9 @@ const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQL0KOv9kUHuO
 
 const startDate = new Date("2025-09-18");
 const today = new Date();
+
+const API_KEY = "AbC8akZ-xo2QD8jIu1M4T";
+const BIBLE_ID = "78a9f6124f344018-01"; // NIV
 
 document.getElementById("date").innerText =
   today.toLocaleDateString(undefined, {
@@ -135,7 +155,7 @@ function normalize(passage) {
     .replace("Rom.", "Romans");
 }
 
-function makeLink(passage) {
+function formatForAPI(passage) {
   passage = normalize(passage);
   const parts = passage.split(" ");
   const chapter = parts.pop();
@@ -148,7 +168,48 @@ function makeLink(passage) {
     "Philippians":"PHP","Colossians":"COL","Romans":"ROM"
   };
 
-  return `https://www.bible.com/bible/111/${map[book]}.${chapter}`;
+  return `${map[book]}.${chapter}`;
+}
+
+async function fetchPassage(passage) {
+  const formatted = formatForAPI(passage);
+
+  const res = await fetch(`https://rest.api.bible/v1/bibles/${BIBLE_ID}/passages/${formatted}`, {
+    headers: {
+      "api-key": API_KEY,
+      "Accept": "application/json"
+    }
+  });
+
+  const data = await res.json();
+
+  let content = data.data.content;
+  content = content.replace(/<\/span>/g, '</span> ');
+
+  return content;
+}
+
+function renderContent(content) {
+  return `
+    <div style="font-size:12px; color:#999; margin-bottom:10px;">
+      New International Version (NIV)
+    </div>
+
+    <div style="font-size:16px; line-height:1.6;">
+      ${content}
+    </div>
+
+    <div style="font-size:11px; color:#999; margin-top:20px;">
+      Scripture taken from the Holy Bible, New International Version® NIV®.
+      Copyright © 1973, 1978, 1984, 2011 by Biblica, Inc.®
+      Used by permission. All rights reserved worldwide.
+    </div>
+  `;
+}
+
+function makeLink(passage) {
+  const formatted = formatForAPI(passage);
+  return `https://www.bible.com/bible/111/${formatted}`;
 }
 
 fetch(SHEET_URL)
@@ -156,27 +217,27 @@ fetch(SHEET_URL)
   .then(data => {
     const rows = data.split("\n");
 
-    // TODAY
     const todayRow = rows[dayIndex + 2].split(",");
-    const nt = normalize(todayRow[1]);
-    const ot = normalize(todayRow[2]);
 
     document.getElementById("ot").innerHTML =
-      `<a href="${makeLink(todayRow[2])}" target="_blank" class="card">
+      `<div class="card" onclick="toggleOT()">
         <div class="label">Old Testament</div>
-        <div class="passage">${ot}</div>
-        <div style="font-size:12px; color:#888; margin-top:6px;">Tap to read →</div>
+        <div class="passage">${normalize(todayRow[2])}</div>
+      </div>
+      <a href="${makeLink(todayRow[2])}" target="_blank" class="youversion-btn">
+        Open in YouVersion (audio + additional versions)
       </a>`;
 
     document.getElementById("nt").innerHTML =
-      `<a href="${makeLink(todayRow[1])}" target="_blank" class="card">
+      `<div class="card" onclick="toggleNT()">
         <div class="label">New Testament</div>
-        <div class="passage">${nt}</div>
-        <div style="font-size:12px; color:#888; margin-top:6px;">Tap to read →</div>
+        <div class="passage">${normalize(todayRow[1])}</div>
+      </div>
+      <a href="${makeLink(todayRow[1])}" target="_blank" class="youversion-btn">
+        Open in YouVersion (audio + additional versions)
       </a>`;
 
-
-    // PREVIOUS 7 DAYS
+    // ✅ FIX: restore previous days
     let historyHTML = "";
     for (let i = 1; i <= 7; i++) {
       const row = rows[dayIndex + 2 - i].split(",");
@@ -193,6 +254,40 @@ fetch(SHEET_URL)
 
     document.getElementById("history").innerHTML = historyHTML;
   });
+
+async function toggleOT() {
+  const el = document.getElementById("ot-content");
+
+  if (el.style.display === "block") {
+    el.style.display = "none";
+    return;
+  }
+
+  el.style.display = "block";
+  el.innerHTML = "Loading...";
+
+  const passage = document.querySelector("#ot .passage").innerText;
+  const content = await fetchPassage(passage);
+
+  el.innerHTML = renderContent(content);
+}
+
+async function toggleNT() {
+  const el = document.getElementById("nt-content");
+
+  if (el.style.display === "block") {
+    el.style.display = "none";
+    return;
+  }
+
+  el.style.display = "block";
+  el.innerHTML = "Loading...";
+
+  const passage = document.querySelector("#nt .passage").innerText;
+  const content = await fetchPassage(passage);
+
+  el.innerHTML = renderContent(content);
+}
 </script>
 
 </body>
