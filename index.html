@@ -111,6 +111,14 @@ const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQL0KOv9kUHuO
 const startDate = new Date("2025-09-18");
 const today = new Date();
 
+const API_KEY = "AbC8akZ-xo2QD8jIu1M4T";
+
+fetch("https://api.scripture.api.bible/v1/bibles")
+  .then(res => res.json())
+  .then(data => {
+    console.log("Bibles:", data);
+  });
+
 document.getElementById("date").innerText =
   today.toLocaleDateString(undefined, {
     weekday: 'long',
