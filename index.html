@@ -126,7 +126,21 @@
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQL0KOv9kUHuO7eOQIxEowpKSlrpoA4EYcuAv1fQqGvVRxuYb6MZlujqXNL3X44HA/pub?output=csv";
 
 const startDate = new Date("2025-09-18");
+
+// ✅ FIXED: UTC-safe day calculation
+function getDayNumber(date) {
+  return Math.floor(Date.UTC(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate()
+  ) / (1000 * 60 * 60 * 24));
+}
+
 const today = new Date();
+
+const dayIndex =
+  getDayNumber(today) -
+  getDayNumber(startDate) -1;
 
 const API_KEY = "AbC8akZ-xo2QD8jIu1M4T";
 const BIBLE_ID = "78a9f6124f344018-01"; // NIV
@@ -137,9 +151,6 @@ document.getElementById("date").innerText =
     month: 'long',
     day: 'numeric'
   });
-
-const diffTime = today - startDate;
-const dayIndex = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
 function normalize(passage) {
   return passage
@@ -158,15 +169,26 @@ function normalize(passage) {
 function formatForAPI(passage) {
   passage = normalize(passage);
   const parts = passage.split(" ");
-  const chapter = parts.pop();
+  let chapter = parts.pop();
   const book = parts.join(" ");
+
+  // ✅ FIX: remove verses and ranges
+  chapter = chapter.split(":")[0]; // 3:16 → 3
+  chapter = chapter.split("-")[0]; // 5-7 → 5
 
   const map = {
     "Isaiah":"ISA","John":"JHN","Psalm":"PSA",
     "2 Corinthians":"2CO","1 Corinthians":"1CO",
     "Galatians":"GAL","Ephesians":"EPH",
-    "Philippians":"PHP","Colossians":"COL","Romans":"ROM"
+    "Philippians":"PHP","Colossians":"COL","Romans":"ROM",
+    "Matthew":"MAT","Mark":"MRK","Luke":"LUK","Acts":"ACT"
   };
+
+  // ✅ safety fallback (prevents crash if book missing)
+  if (!map[book]) {
+    console.error("Book not mapped:", book);
+    return "";
+  }
 
   return `${map[book]}.${chapter}`;
 }
@@ -237,7 +259,6 @@ fetch(SHEET_URL)
         Open in YouVersion (audio + additional versions)
       </a>`;
 
-    // ✅ FIX: restore previous days
     let historyHTML = "";
     for (let i = 1; i <= 7; i++) {
       const row = rows[dayIndex + 2 - i].split(",");
