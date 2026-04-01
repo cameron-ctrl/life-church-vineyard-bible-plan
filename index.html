@@ -125,22 +125,21 @@
 <script>
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQL0KOv9kUHuO7eOQIxEowpKSlrpoA4EYcuAv1fQqGvVRxuYb6MZlujqXNL3X44HA/pub?output=csv";
 
-const startDate = new Date("2025-09-18");
+// ✅ FIXED start date (local-safe)
+const startDate = new Date(2025, 8, 18);
 
-// ✅ FIXED: UTC-safe day calculation
+// ✅ FIXED: LOCAL timezone day calculation
 function getDayNumber(date) {
-  return Math.floor(Date.UTC(
-    date.getFullYear(),
-    date.getMonth(),
-    date.getDate()
-  ) / (1000 * 60 * 60 * 24));
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0); // lock to user's local midnight
+  return Math.floor(d.getTime() / (1000 * 60 * 60 * 24));
 }
 
 const today = new Date();
 
 const dayIndex =
   getDayNumber(today) -
-  getDayNumber(startDate) -1;
+  getDayNumber(startDate);
 
 const API_KEY = "AbC8akZ-xo2QD8jIu1M4T";
 const BIBLE_ID = "78a9f6124f344018-01"; // NIV
@@ -172,9 +171,8 @@ function formatForAPI(passage) {
   let chapter = parts.pop();
   const book = parts.join(" ");
 
-  // ✅ FIX: remove verses and ranges
-  chapter = chapter.split(":")[0]; // 3:16 → 3
-  chapter = chapter.split("-")[0]; // 5-7 → 5
+  chapter = chapter.split(":")[0];
+  chapter = chapter.split("-")[0];
 
   const map = {
     "Isaiah":"ISA","John":"JHN","Psalm":"PSA",
@@ -184,7 +182,6 @@ function formatForAPI(passage) {
     "Matthew":"MAT","Mark":"MRK","Luke":"LUK","Acts":"ACT"
   };
 
-  // ✅ safety fallback (prevents crash if book missing)
   if (!map[book]) {
     console.error("Book not mapped:", book);
     return "";
