@@ -152,42 +152,185 @@ document.getElementById("date").innerText =
   });
 
 function normalize(passage) {
+
   return passage
-    .replace("Is.", "Isaiah")
-    .replace("Jn.", "John")
+
+    .replace("Gen.", "Genesis")
+
+    .replace("Ex.", "Exodus")
+
+    .replace("Lev.", "Leviticus")
+
+    .replace("Num.", "Numbers")
+
+    .replace("Deut.", "Deuteronomy")
+
+    .replace("Josh.", "Joshua")
+
+    .replace("Judg.", "Judges")
+
+    .replace("1 Sam.", "1 Samuel")
+
+    .replace("2 Sam.", "2 Samuel")
+
+    .replace("1 Kings", "1 Kings")
+
+    .replace("2 Kings", "2 Kings")
+
+    .replace("1 Chron.", "1 Chronicles")
+
+    .replace("2 Chron.", "2 Chronicles")
+
+    .replace("Ezra", "Ezra")
+
+    .replace("Neh.", "Nehemiah")
+
+    .replace("Est.", "Esther")
+
+    .replace("Job", "Job")
+
     .replace("Ps.", "Psalm")
-    .replace("2 Cor.", "2 Corinthians")
+
+    .replace("Prov.", "Proverbs")
+
+    .replace("Eccl.", "Ecclesiastes")
+
+    .replace("Song.", "Song of Songs")
+
+    .replace("Is.", "Isaiah")
+
+    .replace("Isa.", "Isaiah")
+
+    .replace("Jer.", "Jeremiah")
+
+    .replace("Lam.", "Lamentations")
+
+    .replace("Ezek.", "Ezekiel")
+
+    .replace("Dan.", "Daniel")
+
+    .replace("Hos.", "Hosea")
+
+    .replace("Obad.", "Obadiah")
+
+    .replace("Mic.", "Micah")
+
+    .replace("Nah.", "Nahum")
+
+    .replace("Hab.", "Habakkuk")
+
+    .replace("Zeph.", "Zephaniah")
+
+    .replace("Hag.", "Haggai")
+
+    .replace("Zech.", "Zechariah")
+
+    .replace("Mal.", "Malachi")
+
+    .replace("Matt.", "Matthew")
+
+    .replace("Mk.", "Mark")
+
+    .replace("Lk.", "Luke")
+
+    .replace("Jn.", "John")
+
+    .replace("Rom.", "Romans")
+
     .replace("1 Cor.", "1 Corinthians")
+
+    .replace("2 Cor.", "2 Corinthians")
+
     .replace("Gal.", "Galatians")
+
     .replace("Eph.", "Ephesians")
+
     .replace("Phil.", "Philippians")
+
     .replace("Col.", "Colossians")
-    .replace("Rom.", "Romans");
+
+    .replace("1 Thess.", "1 Thessalonians")
+
+    .replace("2 Thess.", "2 Thessalonians")
+
+    .replace("1 Tim.", "1 Timothy")
+
+    .replace("2 Tim.", "2 Timothy")
+
+    .replace("Heb.", "Hebrews")
+
+    .replace("Jas.", "James")
+
+    .replace("1 Pet.", "1 Peter")
+
+    .replace("2 Pet.", "2 Peter")
+
+    .replace("1 Jn.", "1 John")
+
+    .replace("2 Jn.", "2 John")
+
+    .replace("3 Jn.", "3 John")
+
+    .replace("Rev.", "Revelation");
+
 }
 
 function formatForAPI(passage) {
+
   passage = normalize(passage);
+
   const parts = passage.split(" ");
+
   let chapter = parts.pop();
+
   const book = parts.join(" ");
 
   chapter = chapter.split(":")[0];
+
   chapter = chapter.split("-")[0];
 
   const map = {
-    "Isaiah":"ISA","John":"JHN","Psalm":"PSA",
-    "2 Corinthians":"2CO","1 Corinthians":"1CO",
-    "Galatians":"GAL","Ephesians":"EPH",
-    "Philippians":"PHP","Colossians":"COL","Romans":"ROM",
-    "Matthew":"MAT","Mark":"MRK","Luke":"LUK","Acts":"ACT"
+
+    "Genesis":"GEN","Exodus":"EXO","Leviticus":"LEV","Numbers":"NUM","Deuteronomy":"DEU",
+
+    "Joshua":"JOS","Judges":"JDG","Ruth":"RUT","1 Samuel":"1SA","2 Samuel":"2SA",
+
+    "1 Kings":"1KI","2 Kings":"2KI","1 Chronicles":"1CH","2 Chronicles":"2CH",
+
+    "Ezra":"EZR","Nehemiah":"NEH","Esther":"EST","Job":"JOB","Psalm":"PSA","Psalms":"PSA",
+
+    "Proverbs":"PRO","Ecclesiastes":"ECC","Song of Songs":"SNG","Isaiah":"ISA","Jeremiah":"JER",
+
+    "Lamentations":"LAM","Ezekiel":"EZK","Daniel":"DAN","Hosea":"HOS","Joel":"JOL",
+
+    "Amos":"AMO","Obadiah":"OBA","Jonah":"JON","Micah":"MIC","Nahum":"NAM",
+
+    "Habakkuk":"HAB","Zephaniah":"ZEP","Haggai":"HAG","Zechariah":"ZEC","Malachi":"MAL",
+
+    "Matthew":"MAT","Mark":"MRK","Luke":"LUK","John":"JHN","Acts":"ACT","Romans":"ROM",
+
+    "1 Corinthians":"1CO","2 Corinthians":"2CO","Galatians":"GAL","Ephesians":"EPH",
+
+    "Philippians":"PHP","Colossians":"COL","1 Thessalonians":"1TH","2 Thessalonians":"2TH",
+
+    "1 Timothy":"1TI","2 Timothy":"2TI","Titus":"TIT","Philemon":"PHM","Hebrews":"HEB",
+
+    "James":"JAS","1 Peter":"1PE","2 Peter":"2PE","1 John":"1JN","2 John":"2JN",
+
+    "3 John":"3JN","Jude":"JUD","Revelation":"REV"
+
   };
 
   if (!map[book]) {
-    console.error("Book not mapped:", book);
+
+    console.error("Book not mapped:", book, "from passage:", passage);
+
     return "";
+
   }
 
   return `${map[book]}.${chapter}`;
+
 }
 
 async function fetchPassage(passage) {
